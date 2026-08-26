@@ -1,83 +1,131 @@
-from fastapi import APIRouter, HTTPException, Query, Response
-from app.schemas.user_schema import UserCreate, UserResponse
+from fastapi import (
+    APIRouter,
+    Depends,
+    Query,
+    Response,
+    status
+)
+
+from app.schemas.user_schema import(
+    UserCreate,
+    UserResponse,
+    UserUpdate,
+    UserPatch
+)
+
+from app.services.user_service import (
+    get_all_users,
+    create_user,
+    update_user,
+    patch_user,
+    delete_user
+)
+
+from app.dependencies.user_dependencies import get_user_dependency
 
 router = APIRouter(
     prefix="/users",
     tags=["users"]
 )
 
-users = [
-    {
-        "id": 1,
-        "name": "Cristian Mesa",
-        "email": "Cristianmesa@example.com",
-        "role": "support",
-        "is_activate": True
-    },
-    {
-        "id": 2,
-        "name": "David Díaz",
-        "email": "daviddiaz@example.com",
-        "role": "admin",
-        "is_activate": True
-    },
-    {
-        "id": 3,
-        "name": "Andrés Rodríguez",
-        "email": "andresrodriguez@example.com",
-        "role": "user",
-        "is_activate": False
-    }
-]
 
-@router.get("/", response_model=list[UserResponse])
+
+@router.get(
+    "/",
+    response_model=list[UserResponse],
+    summary="Listar usuarios",
+    description="Obtiene todos los usuarios registrados.",
+    response_description="Lista de usuarios"
+)
+
 def get_users(
     role: str | None = Query(default=None),
-    is_activate: bool | None = Query(default=None)
+    is_active: bool | None = Query(default=None)
 ):
-    result = users
+    users = get_all_users()
 
     if role is not None:
-        result = [
-            user for user in result 
+        users = [
+            user for user in users
             if user["role"] == role
         ]
 
-    if is_activate is not None:
-        result = [
-            user for user in result
-            if user["is_activate"] == is_activate
+    if is_active is not None:
+        users = [
+            user for user in users
+            if user["is_active"] == is_active
         ]
-    
-    return result
 
+    return users
 
-@router.get("/{user_id}", response_model=UserResponse)
-def get_user(user_id: int):
-    for user in users:
-        if user["id"] == user_id:
-            return user
-        
-    raise HTTPException(
-        status_code=404,
-        detail="Usuario no encontrado"
-    )
+@router.get(
+    "/{user_id}",
+    response_model=UserResponse,
+    summary="Consultar usuario",
+    description="Obtiene un usuario mediante su ID",
+    response_description="Usuario encontrado"
+)
 
+def get_user(
+    user: dict =  Depends(get_user_dependency)
+):
+    return user
 
-@router.post("/", response_model=UserResponse, status_code=201)
-def create_user(user_data: UserCreate):
-    for user in users:
-        if user["email"] == user_data.email:
-            raise HTTPException(
-                status_code=400,
-                detail="El correo electronico ya esta registrado"
-            )
-        
-    new_user = {
-        "id": len(users) + 1,
-        **user_data.model_dump()
-    }
+@router.post(
+    "/",
+    response_model=UserResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Crear usuario",
+    description="Registra un nuevo usuario",
+    response_description="Usuario creado correctamente"
+)
 
-    users.append(new_user)
+def create_new_user(
+    user_data: UserCreate,
+    response: Response
+):
+    new_user = create_user(user_data)
+
+    response.headers["X-App-Name"] = "device_systems"
+    response.headers["X-API-Version"] = "2.0"
 
     return new_user
+
+@router.put(
+    "/{user_id}",
+    response_model=UserResponse,
+    summary="Actualizar usuario completamente",
+    description="Reemplaza completamente la información de un usuario",
+    response_description="Usuario actualizado correctamente"
+)
+def update_user_complete(
+    user_data: UserUpdate,
+    user: dict = Depends(get_user_dependency)
+):
+    return update_user(user["id"], user_data)
+
+@router.patch(
+    "/{user_id}",
+    response_model=UserResponse,
+    summary="Actualizar usuario parcialmente",
+    description="Actualiza únicamente los campos enviados",
+    response_description="Usuario actualizado parcialmente"
+)
+def update_user_partial(
+    user_data: UserPatch,
+    user: dict = Depends(get_user_dependency)
+):
+    return patch_user(user["id"], user_data)
+
+@router.delete(
+    "/{user_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Eliminar usuario",
+    description="Elimina un usuario existente"
+)
+def remove_user(
+    user: dict = Depends(get_user_dependency)
+):
+    delete_user(user["id"])
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

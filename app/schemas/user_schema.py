@@ -12,3 +12,12 @@ class UserCreate(UserBase):
 
 class UserResponse(UserBase):
     id:int
+
+class UserUpdate(UserBase):
+    pass
+
+class UserPatch(BaseModel):
+    name: str | None = Field(default=None, min_length=3)
+    email: EmailStr | None = None
+    role: Literal["admin", "support", "user"] | None = None
+    is_activate: bool | None = None

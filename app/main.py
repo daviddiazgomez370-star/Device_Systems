@@ -10,8 +10,16 @@ app = FastAPI(
 
 app.include_router(user_router)
 
-@app.get("/")
+@app.get(
+    "/",
+    tags=["General"],
+    summary="Verificar estado de la API",
+    description="Comprueba que la API device_systems esté funcionando",
+    response_description="Mensaje de estado"
+)
 def root():
     return{
-        "message": "API device_systems funcionando correctamente"
+        "message": "API device_systems funcionando correctamente",
+        "Version": "2.0.0"
     }
+    
