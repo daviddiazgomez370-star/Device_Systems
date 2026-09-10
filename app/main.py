@@ -23,30 +23,22 @@
 #         "Version": "2.0.0"
 #     }
 
-from fastapi import FastAPI, Depends
-from sqlalchemy import text
+
+
+from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app.database.connection import get_db, create_tables
-from app.models.user_model import Curso, Inscripcion
-from app.routes.user_routes import router as user_router
-app = FastAPI(
-    title="device_systems API",
-    description="API REST para la gestión de usuarios",
-    version="2.0"
-)
+from database import get_db
 
-app.include_router(user_router)
+app = FastAPI()
 
-create_tables()
+@app.post("/usuario/", response_model=UsuarioResponse)
+def crear_usuario(usuario: UsuarioCreate, db: Session = Depends(get_db)):
+    return crear_usuario(db=db, usuario_data=usuario)
 
-@app.get("/")
-def root():
-    return {"mensaje": "API con SQLAlchemy funcionando"}
+@app.get("/usuario/{usuario_id}", response_model=UsuarioResponse)
+def obtener_usuario(db=db, usuario_id=usuario_id):
+    if db_usuario is None:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    return db_usuario
 
-@app.get("/test-db/")
-def test_database(db: Session = Depends(get_db)):
-    try:
-        result = db.execute(text("SELECT 1"))
-        return {"Estado": "Conexión exitosa", "resultado": result.scalar()}
-    except Exception as e:
-        return {"error": f"Error de conexión:{str(e)}"}
+# @app.put("/usuario/{usuario_id}", response_model=UsuarioResponse)
