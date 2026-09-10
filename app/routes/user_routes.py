@@ -21,7 +21,7 @@ from app.services.user_service import (
     delete_user
 )
 
-from app.dependencies.user_dependencies import get_user_dependency
+from app.dependencies.database_dependency import get_user_dependency
 
 router = APIRouter(
     prefix="/users",
@@ -53,7 +53,7 @@ def get_users(
     if is_active is not None:
         users = [
             user for user in users
-            if user["is_active"] == is_active
+            if user["is_activate"] == is_active
         ]
 
     return users

@@ -24,10 +24,18 @@
 #     }
 
 from fastapi import FastAPI, Depends
+from sqlalchemy import text
 from sqlalchemy.orm import Session
-from database import get_db, create_tables
+from app.database.connection import get_db, create_tables
+from app.models.user_model import Curso, Inscripcion
+from app.routes.user_routes import router as user_router
+app = FastAPI(
+    title="device_systems API",
+    description="API REST para la gestión de usuarios",
+    version="2.0"
+)
 
-app = FastAPI()
+app.include_router(user_router)
 
 create_tables()
 
@@ -38,7 +46,7 @@ def root():
 @app.get("/test-db/")
 def test_database(db: Session = Depends(get_db)):
     try:
-        result = db.execute("SELECT 1")
+        result = db.execute(text("SELECT 1"))
         return {"Estado": "Conexión exitosa", "resultado": result.scalar()}
     except Exception as e:
         return {"error": f"Error de conexión:{str(e)}"}

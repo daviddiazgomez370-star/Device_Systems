@@ -9,7 +9,7 @@ def get_user_by_id(user_id: int):
     for user in users:
         if user["id"] == user_id:
             return user
-        
+
     raise HTTPException(
         status_code=404,
         detail="Usuario no encontrado"
@@ -22,13 +22,13 @@ def create_user(user_data: UserCreate):
                 status_code=400,
                 detail="El correo electrónico ya esta registrado"
             )
-        
+
     new_user = {
         "id": max([user["id"] for user in users], default=0) + 1,
         **user_data.model_dump()
     }
 
-    user.append(new_user)
+    users.append(new_user)
 
     return new_user
 
@@ -44,7 +44,7 @@ def update_user(user_id: int, user_data: UserUpdate):
                 status_code=400,
                 detail="El correo electrónico ya está registrado"
             )
-        
+
     user.update(user_data.model_dump())
 
     return user
@@ -59,7 +59,7 @@ def patch_user(user_id: int, user_data: UserPatch):
             status_code=400,
             detail="Debe enviar al menos un campo para actualizar"
         )
-    
+
     if "email" in update_data:
         for existing_user in users:
             if(
@@ -70,7 +70,7 @@ def patch_user(user_id: int, user_data: UserPatch):
                     status_code=400,
                     detail="El correo electrónico ya esta registrado"
                 )
-            
+
     user.update(update_data)
 
     return user
