@@ -30,44 +30,43 @@
 
 
 
-from sqlalchemy.orm import Session
-from models import Usuario
-from schemas import UsuarioCreate
+from pydantic import BaseModel, EmailStr, Field
+from typing import Literal
+from datetime import datetime
 
-def crear_usuario(db: Session, usuario_data: UsuarioCreate):
-    db_usuario = Usuario(
-        nombre =    usuario_data.nombre,
-        email =     usuario_data.email,
-        edad =      usuario_data.edad
+
+class UserBase(BaseModel):
+    name: str = Field(..., min_length=3)
+    email: EmailStr
+    role: Literal["admin", "support", "user"]
+    is_active: bool = True
+
+
+class UserCreate(UserBase):
+    pass
+
+
+class UserUpdate(UserBase):
+    pass
+
+
+class UserPatch(BaseModel):
+    name: str | None = Field(
+        default=None,
+        min_length=3
     )
 
-    db.add(db_usuario)
+    email: EmailStr | None = None
 
-    db.commit()
+    role: Literal[
+        "admin",
+        "support",
+        "user"
+    ] | None = None
 
-    db.refresh(db_usuario)
+    is_active: bool | None = None
 
-    return db_usuario
 
-def obtener_usuario(db: Session, usuario_id: int):
-    return db.query(Usuario).filter(Usuario.id == usuario_id).first()
-
-def actualizar_usuario(db: Session, usuario_id: int, usuario_data: UsuarioCreate):
-    db_usuario = db.query(Usuario).filter(Usuario.id == usuario_id).first()
-
-    if db_usuario:
-        db_usuario.nombre = usuario_data.nombre
-        db_usuario.email = usuario_data.email
-        db_usuario = usuario_data.edad
-
-        db.commit()
-        db.refresh(db_usuario)
-
-    return db_usuario
-
-def eliminar_usuario(db: Session, usuario_id: int):
-    db_usuario = db.query(Usuario).filter(Usuario.id == usuario_id).first()
-
-    if db_usuario:
-        db.delete(db_usuario)
-        db.commit()
+class UserResponse(UserBase):
+    id: int
+    created_at: datetime | None = None

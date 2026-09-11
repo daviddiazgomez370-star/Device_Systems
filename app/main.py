@@ -25,20 +25,59 @@
 
 
 
-from fastapi import FastAPI, Depends, HTTPException
-from sqlalchemy.orm import Session
-from database import get_db
+from fastapi import FastAPI
 
-app = FastAPI()
+from app.database.connection import (
+    Base,
+    engine
+)
 
-@app.post("/usuario/", response_model=UsuarioResponse)
-def crear_usuario(usuario: UsuarioCreate, db: Session = Depends(get_db)):
-    return crear_usuario(db=db, usuario_data=usuario)
+from app.models.user_model import User
 
-@app.get("/usuario/{usuario_id}", response_model=UsuarioResponse)
-def obtener_usuario(db=db, usuario_id=usuario_id):
-    if db_usuario is None:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
-    return db_usuario
+from app.routes.user_routes import router as user_router
 
-# @app.put("/usuario/{usuario_id}", response_model=UsuarioResponse)
+
+# Crear las tablas de la base de datos
+Base.metadata.create_all(
+    bind=engine
+)
+
+
+app = FastAPI(
+    title="device_systems API",
+    description=(
+        "API REST para la gestión de usuarios "
+        "del sistema device_systems utilizando "
+        "FastAPI, SQLAlchemy y SQLite."
+    ),
+    version="3.0.0",
+    contact={
+        "name": "Aprendiz SENA",
+        "email": "aprendiz@example.com"
+    }
+)
+
+
+# Registrar rutas
+app.include_router(
+    user_router
+)
+
+
+@app.get(
+    "/",
+    tags=["General"],
+    summary="Verificar estado de la API",
+    description=(
+        "Comprueba que la API "
+        "device_systems esté funcionando."
+    ),
+    response_description="Estado de la API"
+)
+def root():
+    return {
+        "message": "API device_systems funcionando correctamente",
+        "version": "3.0.0",
+        "database": "SQLite",
+        "orm": "SQLAlchemy"
+    }
